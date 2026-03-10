@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Tracker</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+
+        #total {
+            color: #444;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #1a1a1a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        button:hover {
+            background-color: #333;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        li {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Subscriptions</h1>
+
+<h2 id="total">Monthly Total: £0</h2>
+
+
+
+<form id="add-form">
+    <label for="name"></label><input type="text" id="name" placeholder="Name" required />
+    <label for="cost"></label><input type="number" id="cost" placeholder="Cost" required />
+    <label for="date"></label><input type="text" id="date" placeholder="Date (YYYY-MM-DD)" required />
+    <label for="category"></label><input type="text" id="category" placeholder="Category" required />
+    <label for="paymentMethod"></label><input type="text" id="paymentMethod" placeholder="Payment Method" required />
+    <button type="submit">Add Subscription</button>
+</form>
+
+
+<ul id="subscription-list"></ul>
+
+<script>
+    fetch('http://localhost:8080/subscriptions')
+        .then(response => response.json())
+        .then(data => {
+            const list = document.getElementById('subscription-list');
+            let total = 0;
+
+            data.forEach(sub => {
+                const item = document.createElement('li');
+                item.textContent = `${sub.name} — £${sub.cost} — ${sub.category} — Renews: ${sub.date}`;
+
+                const today = new Date();
+                const renewalDate = new Date(sub.date);
+                const daysUntilRenewal = (renewalDate - today) / (1000 * 60 * 60 * 24);
+
+                if (daysUntilRenewal >= 0 && daysUntilRenewal <= 7) {
+                    item.style.backgroundColor = 'orange';
+                    item.style.fontWeight = 'bold';
+                }
+
+                list.appendChild(item);
+                total += sub.cost;
+            });
+
+            document.getElementById('total').textContent = `Monthly Total: £${total.toFixed(2)}`;
+        });
+
+    document.getElementById('add-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const sub = {
+            name: document.getElementById('name').value,
+            cost: parseFloat(document.getElementById('cost').value),
+            date: document.getElementById('date').value,
+            category: document.getElementById('category').value,
+            paymentMethod: document.getElementById('paymentMethod').value
+        };
+        fetch('http://localhost:8080/subscriptions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sub)
+        }).then(() => location.reload());
+    });
+</script>
+
+
+
+
+
+</body>
+</html>
